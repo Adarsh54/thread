@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const category = searchParams.get("category");
   const brand = searchParams.get("brand");
+  const q = searchParams.get("q");
   const limit = Math.min(Number(searchParams.get("limit") ?? 40), 100);
   const offset = Number(searchParams.get("offset") ?? 0);
 
@@ -18,6 +19,10 @@ export async function GET(request: NextRequest) {
     .not("image_url", "is", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (q) {
+    query = query.or(`name.ilike.%${q}%,brand.ilike.%${q}%,category.ilike.%${q}%`);
+  }
 
   if (category && category !== "all") {
     query = query.ilike("category", `%${category}%`);

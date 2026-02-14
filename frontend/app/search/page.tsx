@@ -335,6 +335,7 @@ export default function SearchPage() {
                     fill
                     className="object-cover"
                     sizes="112px"
+                    loading="eager"
                   />
                 </div>
               )}

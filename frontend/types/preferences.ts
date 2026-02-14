@@ -13,6 +13,7 @@ export interface UserPreferences {
   budget_min: number | null;
   budget_max: number | null;
   gender: "male" | "female" | "non-binary" | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }

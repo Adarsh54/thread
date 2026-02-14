@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import {
   Ruler,
   Shirt,
@@ -13,7 +14,9 @@ import {
   DollarSign,
   Check,
   User as UserIcon,
+  Camera,
   Loader2,
+  X,
 } from "lucide-react";
 import type { UserPreferences } from "@/types/preferences";
 
@@ -53,8 +56,10 @@ export default function PreferencesPage() {
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [authed, setAuthed] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(true);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [prefs, setPrefs] = useState<Partial<UserPreferences>>({
     height_cm: null,
@@ -68,6 +73,7 @@ export default function PreferencesPage() {
     budget_min: null,
     budget_max: null,
     gender: null,
+    photo_url: null,
   });
 
   useEffect(() => {
@@ -128,6 +134,40 @@ export default function PreferencesPage() {
     };
   }, [prefs]);
 
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `${user.id}/photo.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("user-photos")
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("user-photos")
+        .getPublicUrl(path);
+
+      const photoUrl = urlData.publicUrl + `?t=${Date.now()}`;
+      setPrefs((p) => ({ ...p, photo_url: photoUrl }));
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
   function toggleArrayItem(field: "preferred_styles" | "preferred_colors", item: string) {
     setPrefs((prev) => {
       const arr = prev[field] ?? [];
@@ -185,6 +225,60 @@ export default function PreferencesPage() {
                   />
                 ))}
               </div>
+            </Section>
+
+            {/* Photo */}
+            <Section icon={<Camera size={20} />} title="Your Photo">
+              <p className="text-sm text-muted-foreground mb-3">
+                Upload a full-body photo for AI try-on videos.
+              </p>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              {prefs.photo_url ? (
+                <div className="relative inline-block">
+                  <div className="relative h-48 w-36 rounded-xl overflow-hidden bg-secondary">
+                    <Image
+                      src={prefs.photo_url}
+                      alt="Your photo"
+                      fill
+                      className="object-cover"
+                      sizes="144px"
+                    />
+                  </div>
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    className="mt-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Change photo
+                  </button>
+                  <button
+                    onClick={() => setPrefs((p) => ({ ...p, photo_url: null }))}
+                    className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={photoUploading}
+                  className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-10 px-8 hover:border-foreground/30 hover:bg-secondary/50 transition-colors"
+                >
+                  {photoUploading ? (
+                    <Loader2 size={24} className="animate-spin text-muted-foreground" />
+                  ) : (
+                    <Camera size={24} className="text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {photoUploading ? "Uploading..." : "Upload photo"}
+                  </span>
+                </button>
+              )}
             </Section>
 
             {/* Measurements */}

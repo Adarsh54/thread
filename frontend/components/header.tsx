@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, X, Search, Settings2 } from "lucide-react";
+import { Menu, X, Settings2, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -67,7 +67,7 @@ export function Header() {
         {/* Desktop Navigation - Centered */}
         <nav className="hidden items-center gap-10 md:flex absolute left-1/2 -translate-x-1/2">
           <Link
-            href="#products"
+            href="/collections"
             className="text-lg font-semibold transition-colors text-white/80 hover:text-white drop-shadow-sm"
           >
             Collections
@@ -79,19 +79,19 @@ export function Header() {
             Try On
           </Link>
           <Link
-            href="/agent"
+            href="/search"
             className="text-lg font-semibold transition-colors text-white/80 hover:text-white drop-shadow-sm"
           >
-            Agent
+            Find
           </Link>
         </nav>
 
         {/* CTA + Auth - Right side */}
         <div className="hidden items-center gap-4 md:flex">
           <Link
-            href="/search"
+            href="/collections"
             className="p-2.5 rounded-full text-white/80 hover:text-white transition-colors drop-shadow-sm"
-            aria-label="Search"
+            aria-label="Browse collections"
           >
             <Search size={20} />
           </Link>
@@ -137,14 +137,7 @@ export function Header() {
         <div className="border-t border-border bg-background px-6 py-8 md:hidden rounded-b-2xl">
           <nav className="flex flex-col gap-6">
             <Link
-              href="/search"
-              className="text-xl text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Search
-            </Link>
-            <Link
-              href="#products"
+              href="/collections"
               className="text-xl text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
@@ -158,11 +151,11 @@ export function Header() {
               Try On
             </Link>
             <Link
-              href="/agent"
+              href="/search"
               className="text-xl text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Agent
+              Find
             </Link>
             {user ? (
               <>
