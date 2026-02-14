@@ -162,7 +162,7 @@ export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
           <div className="px-6 py-5">
             {activeTab === "mannequin" ? (
               <div className="relative h-[400px] rounded-xl bg-secondary overflow-hidden">
-                <MannequinViewer />
+                <MannequinViewer product={product} />
                 <p className="absolute bottom-3 left-0 right-0 text-center text-xs text-muted-foreground">
                   Drag to rotate
                 </p>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X, Search, Settings2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -101,6 +101,15 @@ export function Header() {
           >
             <Search size={20} />
           </Link>
+          {user && (
+            <Link
+              href="/preferences"
+              className="p-2.5 rounded-full text-white/80 hover:text-white transition-colors drop-shadow-sm"
+              aria-label="Preferences"
+            >
+              <Settings2 size={20} />
+            </Link>
+          )}
           {user ? (
             <button
               onClick={handleSignOut}
@@ -162,15 +171,24 @@ export function Header() {
               Agent
             </Link>
             {user ? (
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleSignOut();
-                }}
-                className="mt-4 px-5 py-3 text-base font-medium rounded-full border border-foreground/30 text-foreground hover:bg-foreground/10 transition-all"
-              >
-                Sign out
-              </button>
+              <>
+                <Link
+                  href="/preferences"
+                  className="text-xl text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Preferences
+                </Link>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="mt-4 px-5 py-3 text-base font-medium rounded-full border border-foreground/30 text-foreground hover:bg-foreground/10 transition-all"
+                >
+                  Sign out
+                </button>
+              </>
             ) : (
               <Link
                 href="/login"
