@@ -1,0 +1,13 @@
+{
+  "name": "thread-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "tsx scrape.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.0"
+  }
+}

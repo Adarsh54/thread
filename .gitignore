@@ -24,6 +24,9 @@ node_modules/
 # vercel
 .vercel
 
+# scraped data
+scripts/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
