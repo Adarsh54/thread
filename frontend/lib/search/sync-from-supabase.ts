@@ -42,7 +42,7 @@ export async function syncProductsFromSupabase(): Promise<{
 
   if (useInference) {
     const texts = list.map((row) =>
-      [row.name, row.description].filter(Boolean).join(" ").trim() || String(row.id)
+      [row.brand, row.name, row.category, row.description].filter(Boolean).join(" ").trim() || String(row.id)
     );
     const embeddings = await inferEmbeddings(texts);
     if (embeddings.length !== list.length) {

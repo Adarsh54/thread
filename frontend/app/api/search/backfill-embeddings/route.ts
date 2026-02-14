@@ -16,7 +16,7 @@ export async function POST(): Promise<Response> {
 
     const { data: rows, error } = await supabase
       .from(SEARCH_CONFIG.productsTable)
-      .select("id, name, description");
+      .select("id, name, description, category, brand");
 
     if (error) {
       console.error("[backfill-embeddings] Supabase error:", error);
@@ -32,9 +32,9 @@ export async function POST(): Promise<Response> {
       });
     }
 
-    const toEmbed = list.map((row: { id: string; name?: string | null; description?: string | null }) => ({
+    const toEmbed = list.map((row: { id: string; name?: string | null; description?: string | null; category?: string | null; brand?: string | null }) => ({
       id: String(row.id),
-      text: [row.name, row.description].filter(Boolean).join(" ").trim() || String(row.id),
+      text: [row.brand, row.name, row.category, row.description].filter(Boolean).join(" ").trim() || String(row.id),
     }));
 
     const results = await computeEmbeddingsForBackfill(toEmbed);
