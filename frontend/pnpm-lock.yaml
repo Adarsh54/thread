@@ -131,6 +131,9 @@ importers:
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.2.0)
+      mannequin-js:
+        specifier: ^5.2.3
+        version: 5.2.3
       next:
         specifier: 16.0.10
         version: 16.0.10(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1677,6 +1680,9 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
+
+  mannequin-js@5.2.3:
+    resolution: {integrity: sha512-nAFGMy1WDtX41jKH64K/fAzfMFe/oNkcVxyWzIg5h6b8bisUvDldbJFOFf9HY3ZyRnnOF3MH1AKU+jxI6doHhA==}
 
   meshline@3.3.1:
     resolution: {integrity: sha512-/TQj+JdZkeSUOl5Mk2J7eLcYTLiQm2IDzmlSvYm7ov15anEcDJ92GHqqazxTSreeNgfnYu24kiEvvv0WlbCdFQ==}
@@ -3473,6 +3479,8 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  mannequin-js@5.2.3: {}
 
   meshline@3.3.1(three@0.182.0):
     dependencies:

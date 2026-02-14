@@ -2,128 +2,77 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
-import { useRef, useMemo, Suspense } from "react";
+import { useRef, useEffect, useState, Suspense } from "react";
 import * as THREE from "three";
 
-function Mannequin() {
+function MannequinModel() {
   const groupRef = useRef<THREE.Group>(null);
+  const [mannequin, setMannequin] = useState<THREE.Object3D | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    import("mannequin-js/src/mannequin.js").then((mod) => {
+      if (cancelled) return;
+
+      const { Male, getStage } = mod;
+
+      // Create the articulated mannequin figure
+      const man = new Male();
+
+      // Recolor: head, shoes, pelvis, joints, limbs, torso, nails
+      man.recolor(
+        "#d4a574", // head - skin
+        "#111111", // shoes - black
+        "#2d2d3d", // pelvis - dark pants
+        "#444444", // joints
+        "#d4a574", // limbs - skin
+        "#1a1a1a", // torso - black shirt
+        "#c4956a"  // nails
+      );
+
+      // Set a natural standing pose
+      man.torso.bend = 2;
+      man.head.nod = -5;
+      man.l_arm.raise = -5;
+      man.r_arm.raise = -5;
+      man.l_arm.straddle = 8;
+      man.r_arm.straddle = 8;
+      man.l_elbow.bend = 15;
+      man.r_elbow.bend = 15;
+
+      // Remove from mannequin-js internal scene
+      man.removeFromParent();
+
+      // Clean up mannequin-js renderer/canvas it creates
+      const stage = getStage();
+      if (stage?.renderer) {
+        stage.renderer.setAnimationLoop(null);
+        stage.renderer.dispose();
+        if (stage.renderer.domElement?.parentNode) {
+          stage.renderer.domElement.remove();
+        }
+      }
+
+      setMannequin(man);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.2;
     }
   });
 
-  const skinMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: "#d4a574",
-    roughness: 0.7,
-    metalness: 0.05,
-  }), []);
-
-  const shirtMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: "#1a1a1a",
-    roughness: 0.8,
-    metalness: 0.0,
-  }), []);
-
-  const pantsMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: "#2d2d3d",
-    roughness: 0.85,
-    metalness: 0.0,
-  }), []);
-
-  const shoeMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: "#111111",
-    roughness: 0.4,
-    metalness: 0.1,
-  }), []);
+  if (!mannequin) return null;
 
   return (
-    <group ref={groupRef} position={[0, -2.8, 0]}>
-      {/* Head */}
-      <mesh position={[0, 4.55, 0]} material={skinMaterial}>
-        <sphereGeometry args={[0.28, 32, 32]} />
-      </mesh>
-
-      {/* Neck */}
-      <mesh position={[0, 4.2, 0]} material={skinMaterial}>
-        <cylinderGeometry args={[0.1, 0.12, 0.15, 16]} />
-      </mesh>
-
-      {/* Torso */}
-      <mesh position={[0, 3.55, 0]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.35, 0.9, 8, 16]} />
-      </mesh>
-
-      {/* Shoulders */}
-      <mesh position={[0, 3.95, 0]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.15, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Left Upper Arm */}
-      <mesh position={[-0.47, 3.42, 0]} rotation={[0, 0, 0.15]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.11, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Left Forearm - overlaps with upper arm at elbow */}
-      <mesh position={[-0.53, 2.88, 0]} rotation={[0, 0, 0.08]} material={skinMaterial}>
-        <capsuleGeometry args={[0.09, 0.45, 8, 16]} />
-      </mesh>
-
-      {/* Left Hand */}
-      <mesh position={[-0.56, 2.53, 0]} material={skinMaterial}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-      </mesh>
-
-      {/* Right Upper Arm */}
-      <mesh position={[0.47, 3.42, 0]} rotation={[0, 0, -0.15]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.11, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Right Forearm - overlaps with upper arm at elbow */}
-      <mesh position={[0.53, 2.88, 0]} rotation={[0, 0, -0.08]} material={skinMaterial}>
-        <capsuleGeometry args={[0.09, 0.45, 8, 16]} />
-      </mesh>
-
-      {/* Right Hand */}
-      <mesh position={[0.56, 2.53, 0]} material={skinMaterial}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-      </mesh>
-
-      {/* Hips */}
-      <mesh position={[0, 2.85, 0]} material={pantsMaterial}>
-        <capsuleGeometry args={[0.3, 0.15, 8, 16]} />
-      </mesh>
-
-      {/* Left Upper Leg */}
-      <mesh position={[-0.18, 2.25, 0]} material={pantsMaterial}>
-        <capsuleGeometry args={[0.13, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Left Lower Leg */}
-      <mesh position={[-0.18, 1.5, 0]} material={pantsMaterial}>
-        <capsuleGeometry args={[0.1, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Right Upper Leg */}
-      <mesh position={[0.18, 2.25, 0]} material={pantsMaterial}>
-        <capsuleGeometry args={[0.13, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Right Lower Leg */}
-      <mesh position={[0.18, 1.5, 0]} material={pantsMaterial}>
-        <capsuleGeometry args={[0.1, 0.55, 8, 16]} />
-      </mesh>
-
-      {/* Left Shoe */}
-      <mesh position={[-0.18, 1.05, 0.06]} material={shoeMaterial}>
-        <boxGeometry args={[0.18, 0.12, 0.32]} />
-      </mesh>
-
-      {/* Right Shoe */}
-      <mesh position={[0.18, 1.05, 0.06]} material={shoeMaterial}>
-        <boxGeometry args={[0.18, 0.12, 0.32]} />
-      </mesh>
+    <group ref={groupRef} scale={[1.1, 1.1, 1.1]}>
+      <primitive object={mannequin} />
     </group>
   );
 }
@@ -131,16 +80,16 @@ function Mannequin() {
 function Scene() {
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 8, 5]} intensity={1.2} />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
       <directionalLight position={[-3, 4, -2]} intensity={0.4} />
       <pointLight position={[0, 6, 3]} intensity={0.8} />
-      <hemisphereLight args={["#ffffff", "#444444", 0.5]} />
+      <hemisphereLight args={["#ffffff", "#444444", 0.6]} />
 
-      <Mannequin />
+      <MannequinModel />
 
       <ContactShadows
-        position={[0, -2.8, 0]}
+        position={[0, -0.71, 0]}
         opacity={0.4}
         scale={8}
         blur={2}
@@ -163,7 +112,7 @@ export function MannequinViewer() {
   return (
     <div className="h-full w-full">
       <Canvas
-        camera={{ position: [0, 0.5, 5.5], fov: 50 }}
+        camera={{ position: [0, 0.8, 3], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
