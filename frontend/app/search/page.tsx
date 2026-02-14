@@ -24,6 +24,7 @@ function nodeToProduct(node: GraphNode): Product {
     brand: node.brand,
     description: null,
     source: "",
+    metadata: node.metadata ?? undefined,
   };
 }
 

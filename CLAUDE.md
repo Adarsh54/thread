@@ -83,14 +83,14 @@ Phased plan to ship **thread** from zero to full feature set. Complete phases in
 - [X] **Auth** — `app/(auth)/login` and `app/(auth)/signup` with Supabase Auth. Protected layout or middleware for authenticated routes. Basic nav (home, search, login/logout).
 - [X] **Types** — Run `supabase gen types typescript`, save to `types/supabase.ts`. Add shared types in `types/` for product, cluster, etc. as needed.
 
-### Phase 2 — Data & Semantic Search
+### Phase 2 — Data & Semantic Search ✅
 
-- [ ] **Schema** — Products table: id, name, description, image_url, price, category, metadata (JSONB). Enable pgvector extension; add `embedding vector(1536)` (or chosen dimension). Index for similarity search.
-- [ ] **Search RPC** — Supabase RPC (e.g. `match_products`) that takes a query embedding and returns products by cosine similarity (limit + optional filters).
-- [ ] **Embeddings** — `lib/embeddings/`: function to get OpenAI embedding for a string; optional batch helper for backfill. Server-only.
-- [ ] **Seed data** — Migration or script to insert sample products. Backfill embeddings for all products (one-time or trigger).
-- [ ] **Search API** — `app/api/search/route.ts`: accept query text → get embedding → call RPC → return products. Optional: cluster results by category or similarity in API or client.
-- [ ] **Search page (basic)** — `app/search/`: search input, call API, display results as a simple list/cards (no 3D yet). Validates end-to-end search.
+- [x] **Schema** — Products table in Supabase (id, name, description, image_url, price, category, brand, source, metadata, embedding). pgvector optional when using Elasticsearch.
+- [x] **Search RPC** — `match_products` in `supabase/migrations/20250214_match_products_rpc.sql` (for pgvector fallback).
+- [x] **Embeddings** — `lib/embeddings` (OpenAI) and **Elasticsearch Inference** (e.g. E5) when `ELASTICSEARCH_INFERENCE_ID` set; `lib/search/backfill.ts` for Supabase backfill.
+- [x] **Seed data** — Products in Supabase; sync to Elasticsearch via POST `/api/search/index` (embeddings from ES inference or Supabase backfill).
+- [x] **Search API** — Elasticsearch kNN or Supabase RPC; auto-sync when ES index empty.
+- [x] **Search page (basic)** — Search input, `?q=` from URL, result cards (brand, category, similarity).
 
 ### Phase 3 — 3D Graph Visualization
 

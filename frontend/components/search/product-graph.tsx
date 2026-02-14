@@ -14,6 +14,7 @@ export interface GraphNode {
   price: number | null;
   category: string | null;
   brand: string | null;
+  metadata?: Record<string, unknown> | null;
   position: [number, number, number];
   highlighted: boolean;
 }
