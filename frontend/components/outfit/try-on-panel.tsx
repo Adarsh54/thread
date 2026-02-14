@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { X, Play } from "lucide-react";
 import type { Product } from "@/types/product";
+
+const TRYON_PRODUCT_KEY = "thread_tryon_product";
 
 interface TryOnPanelProps {
   product: Product | null;
@@ -11,6 +13,8 @@ interface TryOnPanelProps {
 }
 
 export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
+  const router = useRouter();
+
   if (!product) return null;
 
   const allImages: string[] = [
@@ -19,6 +23,11 @@ export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
   ].filter((url): url is string => !!url);
 
   const uniqueImages = [...new Set(allImages)].slice(0, 4);
+
+  function handleTryOn() {
+    sessionStorage.setItem(TRYON_PRODUCT_KEY, JSON.stringify(product));
+    router.push("/outfit?generate=true");
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -85,13 +94,13 @@ export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
 
           {/* Try it on button */}
           <div className="px-6 pb-6">
-            <Link
-              href={`/outfit?product=${encodeURIComponent(product.id)}`}
+            <button
+              onClick={handleTryOn}
               className="flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3.5 text-sm font-semibold text-background hover:opacity-80 transition-opacity"
             >
               <Play size={16} />
               Try it on
-            </Link>
+            </button>
           </div>
         </div>
       </div>

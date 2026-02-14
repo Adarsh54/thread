@@ -99,6 +99,7 @@ export default function SearchPage() {
         {nodes.length > 0 && (
           <ProductGraph
             nodes={nodes}
+            loading={loading}
             onNodeHover={setHoveredNode}
             onNodeClick={(node) => {
               setSelectedNode(node);

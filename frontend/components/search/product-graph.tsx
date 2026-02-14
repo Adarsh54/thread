@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useRef, useEffect, useMemo, useState, Suspense } from "react";
 import * as THREE from "three";
@@ -23,6 +23,7 @@ interface ProductGraphProps {
   nodes: GraphNode[];
   onNodeClick?: (node: GraphNode) => void;
   onNodeHover?: (node: GraphNode | null) => void;
+  loading?: boolean;
 }
 
 // ── Category colors ──────────────────────────────────────────────────────────
@@ -242,9 +243,51 @@ function Nodes({ nodes, onNodeClick, onNodeHover }: ProductGraphProps) {
   );
 }
 
+// ── Loading spin wrapper ─────────────────────────────────────────────────────
+
+function SpinWrapper({ loading, children }: { loading: boolean; children: React.ReactNode }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const currentTilt = useRef(0);
+  const spinSpeed = useRef(0);
+  const loadStart = useRef(0);
+  const wasLoading = useRef(false);
+
+  useEffect(() => {
+    if (loading && !wasLoading.current) {
+      loadStart.current = performance.now();
+    }
+    wasLoading.current = loading;
+  }, [loading]);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+
+    // Tilt on Z axis (perpendicular — tips sideways)
+    const targetTilt = loading ? Math.PI / 2 : 0;
+    currentTilt.current += (targetTilt - currentTilt.current) * Math.min(delta * 4, 1);
+    groupRef.current.rotation.z = currentTilt.current;
+
+    if (loading) {
+      const elapsed = (performance.now() - loadStart.current) / 1000;
+      const peak = 30;
+      const rampTime = 0.8;
+      const t = Math.min(elapsed / rampTime, 1);
+      const eased = 1 - (1 - t) * (1 - t);
+      spinSpeed.current = peak * eased;
+    } else {
+      spinSpeed.current *= Math.max(1 - delta * 3, 0);
+      if (Math.abs(spinSpeed.current) < 0.01) spinSpeed.current = 0;
+    }
+
+    groupRef.current.rotation.y += spinSpeed.current * delta;
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
 // ── Scene ────────────────────────────────────────────────────────────────────
 
-function GraphScene({ nodes, onNodeClick, onNodeHover }: ProductGraphProps) {
+function GraphScene({ nodes, onNodeClick, onNodeHover, loading }: ProductGraphProps) {
   return (
     <>
       <ambientLight intensity={0.5} />
@@ -253,8 +296,10 @@ function GraphScene({ nodes, onNodeClick, onNodeHover }: ProductGraphProps) {
       <pointLight position={[30, -10, 25]} intensity={0.2} color="#f59e0b" distance={100} />
       <hemisphereLight args={["#1a1a2e", "#0a0a0a", 0.4]} />
 
-      <Edges nodes={nodes} />
-      <Nodes nodes={nodes} onNodeClick={onNodeClick} onNodeHover={onNodeHover} />
+      <SpinWrapper loading={!!loading}>
+        <Edges nodes={nodes} />
+        <Nodes nodes={nodes} onNodeClick={onNodeClick} onNodeHover={onNodeHover} />
+      </SpinWrapper>
 
       <OrbitControls
         enablePan
@@ -272,7 +317,7 @@ function GraphScene({ nodes, onNodeClick, onNodeHover }: ProductGraphProps) {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-export function ProductGraph({ nodes, onNodeClick, onNodeHover }: ProductGraphProps) {
+export function ProductGraph({ nodes, onNodeClick, onNodeHover, loading }: ProductGraphProps) {
   return (
     <Canvas
       camera={{ position: [0, 80, 5], fov: 50 }}
@@ -281,7 +326,7 @@ export function ProductGraph({ nodes, onNodeClick, onNodeHover }: ProductGraphPr
       dpr={[1, 1.5]}
     >
       <Suspense fallback={null}>
-        <GraphScene nodes={nodes} onNodeClick={onNodeClick} onNodeHover={onNodeHover} />
+        <GraphScene nodes={nodes} onNodeClick={onNodeClick} onNodeHover={onNodeHover} loading={loading} />
       </Suspense>
     </Canvas>
   );
