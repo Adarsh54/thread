@@ -10,41 +10,39 @@ function ScrollRevealText({ text }: { text: string }) {
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
-      
+
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      
-      // Slower animation - more viewport range
+
       const startOffset = windowHeight * 0.9;
       const endOffset = windowHeight * 0.1;
-      
+
       const totalDistance = startOffset - endOffset;
       const currentPosition = startOffset - rect.top;
-      
+
       const newProgress = Math.max(0, Math.min(1, currentPosition / totalDistance));
       setProgress(newProgress);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
-    
+    handleScroll();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const words = text.split(" ");
-  
+
   return (
     <p
       ref={containerRef}
       className="text-3xl font-semibold leading-snug text-white md:text-4xl lg:text-5xl"
     >
       {words.map((word, index) => {
-        // Calculate blur and opacity based on scroll progress
         const appearProgress = progress * (words.length + 1);
         const wordAppearProgress = Math.max(0, Math.min(1, appearProgress - index));
         const wordOpacity = wordAppearProgress;
         const wordBlur = (1 - wordAppearProgress) * 40;
-        
+
         return (
           <span
             key={index}
@@ -66,21 +64,21 @@ function ScrollRevealText({ text }: { text: string }) {
 
 const sideImages = [
   {
-    src: "/images/interior-view.png",
-    alt: "Interior view with landscape",
+    src: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=1200&fit=crop",
+    alt: "Fashion detail close-up",
     position: "left",
   },
   {
-    src: "/images/rusted-metal.png",
-    alt: "Rusted metal texture",
+    src: "https://images.unsplash.com/photo-1467043237213-65f2da53396f?w=600&h=1200&fit=crop",
+    alt: "Textile and fabric textures",
     position: "right",
   },
 ];
 
 const textCycles = [
-  "Design & Sustainability.",
-  "Passive Energy.",
-  "Bio-sourced Construction.",
+  "3D Graph Exploration.",
+  "AI Outfit Try-On.",
+  "Your Personal Stylist.",
 ];
 
 export function TechnologySection() {
@@ -88,31 +86,30 @@ export function TechnologySection() {
   const textSectionRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [textProgress, setTextProgress] = useState(0);
-  
-  const descriptionText = "Passive architecture reimagining modern living. Triple glazing, reinforced insulation and natural ventilation combine with solar panels to create an energy-autonomous home. Bio-sourced materials like solid wood and hemp wool ensure healthy indoor air and minimal ecological footprint.";
+
+  const descriptionText = "Thread reimagines how you shop. Search with natural language, explore results as an interactive 3D graph of clustered styles, try outfits on yourself with AI-generated visualization, and let your personal shopping agent find exactly what you're looking for.";
 
   useEffect(() => {
     const handleScroll = () => {
       if (!sectionRef.current) return;
-      
+
       const rect = sectionRef.current.getBoundingClientRect();
-      const scrollableHeight = window.innerHeight * 4; // Increased for 3 text cycles
+      const scrollableHeight = window.innerHeight * 4;
       const scrolled = -rect.top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollableHeight));
-      
+
       setScrollProgress(progress);
 
-      // Text scroll progress
       if (textSectionRef.current) {
         const textRect = textSectionRef.current.getBoundingClientRect();
         const windowHeight = window.innerHeight;
-        
+
         const startOffset = windowHeight * 0.9;
         const endOffset = windowHeight * 0.1;
-        
+
         const totalDistance = startOffset - endOffset;
         const currentPosition = startOffset - textRect.top;
-        
+
         const newTextProgress = Math.max(0, Math.min(1, currentPosition / totalDistance));
         setTextProgress(newTextProgress);
       }
@@ -120,28 +117,24 @@ export function TechnologySection() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  // Title fades out first (0 to 0.2)
   const titleOpacity = Math.max(0, 1 - (scrollProgress / 0.2));
-  
-  // Image transforms start after title fades (0.2 to 1)
-  const imageProgress = Math.max(0, Math.min(1, (scrollProgress - 0.2) / 0.8));
-  
-  // Smooth interpolations
-  const centerWidth = 100 - (imageProgress * 58); // 100% to 42%
-  const centerHeight = 100 - (imageProgress * 30); // 100% to 70%
-  const sideWidth = imageProgress * 22; // 0% to 22%
-  const sideOpacity = imageProgress;
-  const sideTranslateLeft = -100 + (imageProgress * 100); // -100% to 0%
-  const sideTranslateRight = 100 - (imageProgress * 100); // 100% to 0%
-  const gap = imageProgress * 16; // 0px to 16px
 
-  // Calculate grayscale for text section based on textProgress
+  const imageProgress = Math.max(0, Math.min(1, (scrollProgress - 0.2) / 0.8));
+
+  const centerWidth = 100 - (imageProgress * 58);
+  const centerHeight = 100 - (imageProgress * 30);
+  const sideWidth = imageProgress * 22;
+  const sideOpacity = imageProgress;
+  const sideTranslateLeft = -100 + (imageProgress * 100);
+  const sideTranslateRight = 100 - (imageProgress * 100);
+  const gap = imageProgress * 16;
+
   const grayscaleAmount = Math.round((1 - textProgress) * 100);
 
   return (
@@ -150,13 +143,13 @@ export function TechnologySection() {
       <div className="sticky top-0 h-screen overflow-hidden">
         <div className="flex h-full w-full items-center justify-center">
           {/* Bento Grid Container */}
-          <div 
+          <div
             className="relative flex h-full w-full items-stretch justify-center"
             style={{ gap: `${gap}px`, padding: `${imageProgress * 16}px` }}
           >
-            
+
             {/* Left Column */}
-            <div 
+            <div
               className="relative overflow-hidden will-change-transform"
               style={{
                 width: `${sideWidth}%`,
@@ -177,7 +170,7 @@ export function TechnologySection() {
             </div>
 
             {/* Main Center Image */}
-            <div 
+            <div
               className="relative overflow-hidden will-change-transform"
               style={{
                 width: `${centerWidth}%`,
@@ -186,21 +179,19 @@ export function TechnologySection() {
               }}
             >
               {/* Layered Images - Progressive Fade In */}
-              {/* Image 1 - Base layer - Sunrise/Sunset with sun rays */}
               <Image
-                src="/images/mono-1.png"
-                alt="Modern architecture at sunrise"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=800&fit=crop"
+                alt="Fashion store interior"
                 fill
                 className="object-cover"
                 style={{
                   opacity: scrollProgress < 0.25 ? 1 : 1,
                 }}
               />
-              
-              {/* Image 2 - Daytime scene - Fades in during first text cycle */}
+
               <Image
-                src="/images/mono-2.png"
-                alt="Modern architecture in daylight"
+                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&h=800&fit=crop"
+                alt="Curated clothing display"
                 fill
                 className="absolute inset-0 object-cover"
                 style={{
@@ -208,11 +199,10 @@ export function TechnologySection() {
                   transition: 'opacity 0.3s ease',
                 }}
               />
-              
-              {/* Image 3 - Dusk/Evening - Fades in during second text cycle */}
+
               <Image
-                src="/images/mono-3.png"
-                alt="Modern architecture at dusk"
+                src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200&h=800&fit=crop"
+                alt="Street style fashion"
                 fill
                 className="absolute inset-0 object-cover"
                 style={{
@@ -220,11 +210,10 @@ export function TechnologySection() {
                   transition: 'opacity 0.3s ease',
                 }}
               />
-              
-              {/* Image 4 - Night with stars - Fades in during third text cycle */}
+
               <Image
-                src="/images/mono-4.png"
-                alt="Modern architecture at night"
+                src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200&h=800&fit=crop"
+                alt="Fashion runway"
                 fill
                 className="absolute inset-0 object-cover"
                 style={{
@@ -232,41 +221,37 @@ export function TechnologySection() {
                   transition: 'opacity 0.3s ease',
                 }}
               />
-              
+
               <div className="absolute inset-0 bg-foreground/40" />
-              
+
               {/* Title Text - Cycles through 3 texts with blur effect */}
-              <div 
+              <div
                 className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
               >
                 {textCycles.map((text, cycleIndex) => {
-                  // Each text cycle takes 1/3 of the scroll progress
                   const cycleStart = cycleIndex / textCycles.length;
                   const cycleEnd = (cycleIndex + 1) / textCycles.length;
-                  const cycleMid = (cycleStart + cycleEnd) / 2;
-                  
+
                   const words = text.split(" ");
-                  
+
                   return (
-                    <h2 
+                    <h2
                       key={cycleIndex}
                       className="absolute max-w-3xl font-medium leading-tight tracking-tight text-white md:text-5xl lg:text-7xl text-5xl"
                     >
                       {words.map((word, wordIndex) => {
                         let wordOpacity = 0;
                         let wordBlur = 40;
-                        
+
                         if (scrollProgress >= cycleStart && scrollProgress < cycleEnd) {
                           const localProgress = (scrollProgress - cycleStart) / (cycleEnd - cycleStart);
-                          
-                          // First half: appear (blur 40→0, opacity 0→1)
+
                           if (localProgress < 0.5) {
                             const appearProgress = (localProgress / 0.5) * (words.length + 1);
                             const wordAppearProgress = Math.max(0, Math.min(1, appearProgress - wordIndex));
                             wordOpacity = wordAppearProgress;
                             wordBlur = (1 - wordAppearProgress) * 40;
-                          } 
-                          // Second half: disappear (blur 0→40, opacity 1→0)
+                          }
                           else {
                             const disappearProgress = ((localProgress - 0.5) / 0.5) * (words.length + 1);
                             const wordDisappearProgress = Math.max(0, Math.min(1, disappearProgress - wordIndex));
@@ -274,7 +259,7 @@ export function TechnologySection() {
                             wordBlur = wordDisappearProgress * 40;
                           }
                         }
-                        
+
                         return (
                           <span
                             key={wordIndex}
@@ -297,7 +282,7 @@ export function TechnologySection() {
             </div>
 
             {/* Right Column */}
-            <div 
+            <div
               className="relative overflow-hidden will-change-transform"
               style={{
                 width: `${sideWidth}%`,
@@ -321,16 +306,15 @@ export function TechnologySection() {
         </div>
       </div>
 
-      {/* Scroll space to enable animation - increased for 3 text cycles */}
+      {/* Scroll space */}
       <div className="h-[400vh]" />
 
-      {/* Description Section with Background Image and Scroll Reveal */}
-      <div 
+      {/* Description Section */}
+      <div
         ref={textSectionRef}
         className="relative overflow-hidden px-6 py-24 md:px-12 md:py-32 lg:px-20 lg:py-40 bg-black"
       >
-        {/* Gradient Overlay - Top to transparent */}
-        <div 
+        <div
           className="absolute top-0 left-0 right-0 z-0 pointer-events-none"
           style={{
             height: '150px',
@@ -338,7 +322,6 @@ export function TechnologySection() {
           }}
         />
 
-        {/* Text Content */}
         <div className="relative z-10 mx-auto max-w-4xl">
           <ScrollRevealText text={descriptionText} />
         </div>

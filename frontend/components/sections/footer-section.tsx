@@ -4,10 +4,10 @@ import Link from "next/link";
 
 const footerLinks = {
   explore: [
-    { label: "Products", href: "#products" },
-    { label: "Technology", href: "#technology" },
-    { label: "Gallery", href: "#gallery" },
-    { label: "Accessories", href: "#accessories" },
+    { label: "Search", href: "#search" },
+    { label: "Collections", href: "#products" },
+    { label: "Try On", href: "#gallery" },
+    { label: "Agent", href: "#about" },
   ],
   about: [
     { label: "Our Story", href: "#" },
@@ -19,7 +19,7 @@ const footerLinks = {
     { label: "FAQ", href: "#" },
     { label: "Shipping", href: "#" },
     { label: "Returns", href: "#" },
-    { label: "Warranty", href: "#" },
+    { label: "Privacy", href: "#" },
   ],
 };
 
@@ -31,11 +31,11 @@ export function FooterSection() {
         <div className="grid grid-cols-2 gap-12 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1 lg:col-span-2">
-            <Link href="#hero" className="text-lg font-medium text-foreground">
-              MONO
+            <Link href="#hero" className="text-2xl font-semibold text-foreground lowercase">
+              thread
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Sustainable design homes combining contemporary aesthetics with energy efficiency and eco-friendly materials.
+              Shopping reimagined through semantic search, 3D visualization, and AI-powered personal styling.
             </p>
           </div>
 
@@ -96,10 +96,8 @@ export function FooterSection() {
       <div className="border-t border-border px-6 py-6 md:px-12 lg:px-20">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            2026 MONO. All rights reserved.
+            2026 thread. All rights reserved.
           </p>
-
-          
 
           {/* Social Links */}
           <div className="flex items-center gap-4">
@@ -119,7 +117,7 @@ export function FooterSection() {
               href="#"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              YouTube
+              TikTok
             </Link>
           </div>
         </div>

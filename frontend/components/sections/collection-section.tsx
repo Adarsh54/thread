@@ -2,27 +2,27 @@
 
 import { FadeImage } from "@/components/fade-image";
 
-const accessories = [
+const collections = [
   {
     id: 1,
-    name: "Compact Model",
-    description: "120m² living space with optimal energy efficiency",
-    price: "$285,000",
-    image: "/images/hero-side-1.png",
+    name: "Streetwear",
+    description: "Bold fits for the everyday. Curated by your preferences.",
+    price: "From $45",
+    image: "https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=600&h=900&fit=crop",
   },
   {
     id: 2,
-    name: "Standard Model",
-    description: "180m² perfect balance of space and sustainability",
-    price: "$395,000",
-    image: "/images/hero-side-2.png",
+    name: "Essentials",
+    description: "Timeless basics that anchor any wardrobe.",
+    price: "From $30",
+    image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&h=900&fit=crop",
   },
   {
     id: 3,
-    name: "Premium Model",
-    description: "250m² expansive design with maximum comfort",
-    price: "$525,000",
-    image: "/images/hero-side-4.png",
+    name: "Evening",
+    description: "Statement pieces for when the occasion calls.",
+    price: "From $120",
+    image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=900&fit=crop",
   },
 ];
 
@@ -32,21 +32,21 @@ export function CollectionSection() {
       {/* Section Title */}
       <div className="px-6 py-20 md:px-12 lg:px-20 md:py-10">
         <h2 className="text-3xl font-medium tracking-tight text-foreground md:text-4xl">
-          Surface Options
+          Collections
         </h2>
       </div>
 
-      {/* Accessories Grid/Carousel */}
+      {/* Collections Grid/Carousel */}
       <div className="pb-24">
         {/* Mobile: Horizontal Carousel */}
         <div className="flex gap-6 overflow-x-auto px-6 pb-4 md:hidden snap-x snap-mandatory scrollbar-hide">
-          {accessories.map((accessory) => (
-            <div key={accessory.id} className="group flex-shrink-0 w-[75vw] snap-center">
+          {collections.map((item) => (
+            <div key={item.id} className="group flex-shrink-0 w-[75vw] snap-center">
               {/* Image */}
               <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-secondary">
                 <FadeImage
-                  src={accessory.image || "/placeholder.svg"}
-                  alt={accessory.name}
+                  src={item.image || "/placeholder.svg"}
+                  alt={item.name}
                   fill
                   className="object-cover group-hover:scale-105"
                 />
@@ -57,14 +57,14 @@ export function CollectionSection() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-medium leading-snug text-foreground">
-                      {accessory.name}
+                      {item.name}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {accessory.description}
+                      {item.description}
                     </p>
                   </div>
                   <span className="text-lg font-medium text-foreground">
-                    {accessory.price}
+                    {item.price}
                   </span>
                 </div>
               </div>
@@ -74,13 +74,13 @@ export function CollectionSection() {
 
         {/* Desktop: Grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-8 md:px-12 lg:px-20">
-          {accessories.map((accessory) => (
-            <div key={accessory.id} className="group">
+          {collections.map((item) => (
+            <div key={item.id} className="group">
               {/* Image */}
               <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-secondary">
                 <FadeImage
-                  src={accessory.image || "/placeholder.svg"}
-                  alt={accessory.name}
+                  src={item.image || "/placeholder.svg"}
+                  alt={item.name}
                   fill
                   className="object-cover group-hover:scale-105"
                 />
@@ -91,14 +91,14 @@ export function CollectionSection() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-medium leading-snug text-foreground">
-                      {accessory.name}
+                      {item.name}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {accessory.description}
+                      {item.description}
                     </p>
                   </div>
                   <span className="font-medium text-foreground text-2xl">
-                    {accessory.price}
+                    {item.price}
                   </span>
                 </div>
               </div>
