@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Menu, X, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
 
 export function Header() {
   const router = useRouter();
@@ -45,14 +44,14 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-4xl transition-all duration-300 ${isScrolled ? "bg-black/70 backdrop-blur-md rounded-full" : "bg-transparent"}`}
+      className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-5xl transition-all duration-300 ${isScrolled ? "bg-black/70 backdrop-blur-md rounded-full" : "bg-transparent"}`}
       style={{
         boxShadow: isScrolled
           ? "rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, rgba(14, 63, 126, 0.04) 0px 24px 24px -12px"
           : "none",
       }}
     >
-      <div className="flex items-center justify-between transition-all duration-300 px-4 pl-7 py-4">
+      <div className="flex items-center justify-between transition-all duration-300 px-6 py-4">
         {/* Logo */}
         <Link
           href="/"
@@ -61,8 +60,8 @@ export function Header() {
           thread
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-10 md:flex">
+        {/* Desktop Navigation - Centered */}
+        <nav className="hidden items-center gap-10 md:flex absolute left-1/2 -translate-x-1/2">
           <Link
             href="/search"
             className="text-lg font-semibold transition-colors text-white/80 hover:text-white drop-shadow-sm"
@@ -89,7 +88,7 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* CTA + Auth */}
+        {/* CTA + Auth - Right side */}
         <div className="hidden items-center gap-4 md:flex">
           <Link
             href="/search"
@@ -99,9 +98,12 @@ export function Header() {
             <Search size={20} />
           </Link>
           {user ? (
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <button
+              onClick={handleSignOut}
+              className="px-5 py-2 text-sm font-semibold rounded-full border border-white/30 text-white hover:bg-white/10 transition-all"
+            >
               Sign out
-            </Button>
+            </button>
           ) : (
             <Link
               href="/login"
@@ -156,16 +158,15 @@ export function Header() {
               Agent
             </Link>
             {user ? (
-              <Button
-                variant="outline"
-                className="mt-4"
+              <button
                 onClick={() => {
                   setIsMenuOpen(false);
                   handleSignOut();
                 }}
+                className="mt-4 px-5 py-3 text-base font-medium rounded-full border border-foreground/30 text-foreground hover:bg-foreground/10 transition-all"
               >
                 Sign out
-              </Button>
+              </button>
             ) : (
               <Link
                 href="/login"

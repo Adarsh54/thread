@@ -4,17 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -22,14 +11,13 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
@@ -39,82 +27,86 @@ export default function SignupPage() {
       setError(signUpError.message);
       return;
     }
-    setSuccess(true);
-  }
-
-  if (success) {
-    return (
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Check your email</CardTitle>
-          <CardDescription>
-            We sent a confirmation link to {email}. Click it to activate your
-            account, then sign in.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/login">Back to sign in</Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    );
+    // If user is auto-confirmed (email confirmation disabled), sign them in directly
+    if (data.session) {
+      router.push("/");
+      router.refresh();
+      return;
+    }
+    // Otherwise show check-email message
+    router.push("/login?message=Check your email to confirm your account");
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>
-          Enter your email and password to get started.
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
+    <div>
+      <div className="mb-10 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-white">
+          Join thread
+        </h1>
+        <p className="mt-3 text-lg text-white/60">
+          Create an account to start shopping smarter
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3">
+            <p className="text-sm text-red-400" role="alert">
               {error}
             </p>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              disabled={loading}
-            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              disabled={loading}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account…" : "Sign up"}
-          </Button>
-          <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-foreground underline">
-              Sign in
-            </Link>
-          </p>
-        </CardFooter>
+        )}
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-white/80">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            disabled={loading}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 backdrop-blur-sm focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all disabled:opacity-50"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium text-white/80">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            disabled={loading}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 backdrop-blur-sm focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all disabled:opacity-50"
+          />
+          <p className="text-xs text-white/30">Minimum 6 characters</p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-full bg-white py-3.5 text-base font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? "Creating account..." : "Create account"}
+        </button>
+
+        <p className="text-center text-sm text-white/50">
+          Already have an account?{" "}
+          <Link href="/login" className="text-white font-medium hover:underline">
+            Sign in
+          </Link>
+        </p>
       </form>
-    </Card>
+    </div>
   );
 }

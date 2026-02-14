@@ -1,8 +1,8 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Environment, ContactShadows } from "@react-three/drei";
-import { useRef, useMemo } from "react";
+import { OrbitControls, ContactShadows } from "@react-three/drei";
+import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 
 function Mannequin() {
@@ -14,31 +14,26 @@ function Mannequin() {
     }
   });
 
-  const skinColor = "#d4a574";
-  const shirtColor = "#1a1a1a";
-  const pantsColor = "#2d2d3d";
-  const shoeColor = "#111111";
-
   const skinMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: skinColor,
+    color: "#d4a574",
     roughness: 0.7,
     metalness: 0.05,
   }), []);
 
   const shirtMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: shirtColor,
+    color: "#1a1a1a",
     roughness: 0.8,
     metalness: 0.0,
   }), []);
 
   const pantsMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: pantsColor,
+    color: "#2d2d3d",
     roughness: 0.85,
     metalness: 0.0,
   }), []);
 
   const shoeMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: shoeColor,
+    color: "#111111",
     roughness: 0.4,
     metalness: 0.1,
   }), []);
@@ -55,7 +50,7 @@ function Mannequin() {
         <cylinderGeometry args={[0.1, 0.12, 0.15, 16]} />
       </mesh>
 
-      {/* Torso - shirt */}
+      {/* Torso */}
       <mesh position={[0, 3.55, 0]} material={shirtMaterial}>
         <capsuleGeometry args={[0.35, 0.9, 8, 16]} />
       </mesh>
@@ -63,7 +58,6 @@ function Mannequin() {
       {/* Shoulders */}
       <mesh position={[0, 3.95, 0]} material={shirtMaterial}>
         <capsuleGeometry args={[0.15, 0.55, 8, 16]} />
-        <meshStandardMaterial color={shirtColor} roughness={0.8} />
       </mesh>
 
       {/* Left Upper Arm */}
@@ -86,7 +80,7 @@ function Mannequin() {
         <capsuleGeometry args={[0.08, 0.45, 8, 16]} />
       </mesh>
 
-      {/* Hips / Belt area */}
+      {/* Hips */}
       <mesh position={[0, 2.85, 0]} material={pantsMaterial}>
         <capsuleGeometry args={[0.3, 0.15, 8, 16]} />
       </mesh>
@@ -124,39 +118,48 @@ function Mannequin() {
   );
 }
 
+function Scene() {
+  return (
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 8, 5]} intensity={1.2} />
+      <directionalLight position={[-3, 4, -2]} intensity={0.4} />
+      <pointLight position={[0, 6, 3]} intensity={0.8} />
+      <hemisphereLight args={["#ffffff", "#444444", 0.5]} />
+
+      <Mannequin />
+
+      <ContactShadows
+        position={[0, -2.8, 0]}
+        opacity={0.4}
+        scale={8}
+        blur={2}
+        far={4}
+      />
+
+      <OrbitControls
+        enablePan={false}
+        enableZoom={false}
+        minPolarAngle={Math.PI / 4}
+        maxPolarAngle={Math.PI / 1.8}
+        autoRotate
+        autoRotateSpeed={1}
+      />
+    </>
+  );
+}
+
 export function MannequinViewer() {
   return (
     <div className="h-full w-full">
       <Canvas
-        camera={{ position: [0, 0, 4.5], fov: 45 }}
+        camera={{ position: [0, 0.5, 5.5], fov: 50 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 8, 5]} intensity={1} castShadow />
-        <directionalLight position={[-3, 4, -2]} intensity={0.3} />
-        <spotLight position={[0, 10, 0]} intensity={0.4} angle={0.5} penumbra={1} />
-
-        <Mannequin />
-
-        <ContactShadows
-          position={[0, -2.8, 0]}
-          opacity={0.4}
-          scale={8}
-          blur={2}
-          far={4}
-        />
-
-        <Environment preset="studio" />
-
-        <OrbitControls
-          enablePan={false}
-          enableZoom={false}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 1.8}
-          autoRotate
-          autoRotateSpeed={1}
-        />
+        <Suspense fallback={null}>
+          <Scene />
+        </Suspense>
       </Canvas>
     </div>
   );
