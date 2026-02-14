@@ -24,7 +24,7 @@ export default function AuthLayout({
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
       <div className="relative flex min-h-screen flex-col items-center justify-center px-4 pt-24 pb-12">
-        <div className="w-full max-w-md rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 p-8">
+        <div className="w-full max-w-lg rounded-2xl bg-white/15 backdrop-blur-xl border border-white/30 p-10">
           {children}
         </div>
       </div>

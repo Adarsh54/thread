@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Menu, X, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -55,9 +56,12 @@ export function Header() {
         {/* Logo */}
         <Link
           href="/"
-          className="text-3xl font-bold tracking-tight transition-colors duration-300 text-white lowercase drop-shadow-md"
+          className="flex items-center gap-2.5 transition-colors duration-300"
         >
-          thread
+          <Image src="/thread-logo.svg" alt="" width={28} height={28} className="drop-shadow-md" />
+          <span className="text-3xl font-bold tracking-tight text-white lowercase drop-shadow-md">
+            thread
+          </span>
         </Link>
 
         {/* Desktop Navigation - Centered */}
