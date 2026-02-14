@@ -61,23 +61,33 @@ function Mannequin() {
       </mesh>
 
       {/* Left Upper Arm */}
-      <mesh position={[-0.5, 3.55, 0]} rotation={[0, 0, 0.15]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.1, 0.5, 8, 16]} />
+      <mesh position={[-0.47, 3.42, 0]} rotation={[0, 0, 0.15]} material={shirtMaterial}>
+        <capsuleGeometry args={[0.11, 0.55, 8, 16]} />
       </mesh>
 
-      {/* Left Forearm */}
-      <mesh position={[-0.55, 2.9, 0.05]} rotation={[0.1, 0, 0.05]} material={skinMaterial}>
-        <capsuleGeometry args={[0.08, 0.45, 8, 16]} />
+      {/* Left Forearm - overlaps with upper arm at elbow */}
+      <mesh position={[-0.53, 2.88, 0]} rotation={[0, 0, 0.08]} material={skinMaterial}>
+        <capsuleGeometry args={[0.09, 0.45, 8, 16]} />
+      </mesh>
+
+      {/* Left Hand */}
+      <mesh position={[-0.56, 2.53, 0]} material={skinMaterial}>
+        <sphereGeometry args={[0.08, 16, 16]} />
       </mesh>
 
       {/* Right Upper Arm */}
-      <mesh position={[0.5, 3.55, 0]} rotation={[0, 0, -0.15]} material={shirtMaterial}>
-        <capsuleGeometry args={[0.1, 0.5, 8, 16]} />
+      <mesh position={[0.47, 3.42, 0]} rotation={[0, 0, -0.15]} material={shirtMaterial}>
+        <capsuleGeometry args={[0.11, 0.55, 8, 16]} />
       </mesh>
 
-      {/* Right Forearm */}
-      <mesh position={[0.55, 2.9, 0.05]} rotation={[0.1, 0, -0.05]} material={skinMaterial}>
-        <capsuleGeometry args={[0.08, 0.45, 8, 16]} />
+      {/* Right Forearm - overlaps with upper arm at elbow */}
+      <mesh position={[0.53, 2.88, 0]} rotation={[0, 0, -0.08]} material={skinMaterial}>
+        <capsuleGeometry args={[0.09, 0.45, 8, 16]} />
+      </mesh>
+
+      {/* Right Hand */}
+      <mesh position={[0.56, 2.53, 0]} material={skinMaterial}>
+        <sphereGeometry args={[0.08, 16, 16]} />
       </mesh>
 
       {/* Hips */}
