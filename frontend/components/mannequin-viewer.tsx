@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import type { OrbitControls as OrbitControlsType } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Product } from "@/types/product";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ export function MannequinViewer({ product, colorHex }: MannequinViewerProps) {
   const mannequinRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsType | null>(null);
   const initRef = useRef(false);
   const [ready, setReady] = useState(false);
 
@@ -115,6 +117,27 @@ export function MannequinViewer({ product, colorHex }: MannequinViewerProps) {
         // Create mannequin
         const man = new Male();
         mannequinRef.current = man;
+
+        // Hide ground plane if present
+        if (stage.ground) stage.ground.visible = false;
+
+        // Add OrbitControls for drag-to-rotate, scroll-to-zoom
+        import("three/examples/jsm/controls/OrbitControls.js").then(({ OrbitControls }) => {
+          const controls = new OrbitControls(stage.camera, canvas);
+          controls.enableDamping = true;
+          controls.dampingFactor = 0.08;
+          controls.enablePan = true;
+          controls.minDistance = 2;
+          controls.maxDistance = 10;
+          controls.target.set(0, 0, 0);
+          controlsRef.current = controls;
+
+          // Use mannequin-js's animation loop hook to update controls each frame
+          stage.animationLoop = () => {
+            controls.update();
+          };
+        });
+
         setReady(true);
       })
       .catch((err) => {
@@ -134,7 +157,10 @@ export function MannequinViewer({ product, colorHex }: MannequinViewerProps) {
     });
     resizeObserver.observe(container);
 
-    return () => { resizeObserver.disconnect(); };
+    return () => {
+      resizeObserver.disconnect();
+      if (controlsRef.current) controlsRef.current.dispose();
+    };
   }, []);
 
   // Apply clothing when product/color changes or mannequin becomes ready

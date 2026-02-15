@@ -2,6 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const maxDuration = 60;
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { productName, productCategory, productAnalysis, personAnalysis } = await request.json();
+  const { productName, productCategory, productAnalysis, personAnalysis, personPhotoUrl, gender } = await request.json();
 
   if (!productName) {
     return NextResponse.json(
@@ -56,11 +58,15 @@ export async function POST(request: NextRequest) {
     const isFootwear = /shoe|sneaker|boot|sandal|heel|loafer|slipper/i.test(garmentType + " " + category);
     const isFullBody = /dress|jumpsuit|romper|suit|onesie|overalls/i.test(garmentType + " " + category);
 
+    // Resolve gender from explicit param, person analysis, or default
+    const resolvedGender = gender || personAnalysis?.gender || null;
+
     // Build person description from pre-computed analysis
-    let personDesc = "a fashion model";
+    let personDesc = resolvedGender ? `a ${resolvedGender} fashion model` : "a fashion model";
     if (personAnalysis?.hair) {
       const parts = [
         personAnalysis.age_range,
+        resolvedGender ?? "",
         "person with a",
         personAnalysis.build ?? "average",
         "build,",
@@ -70,13 +76,27 @@ export async function POST(request: NextRequest) {
         "skin tone",
       ].filter(Boolean);
       personDesc = `a ${parts.join(" ")}`;
-    } else if (personAnalysis?.gender) {
+    } else if (resolvedGender || personAnalysis?.height_cm) {
       const parts = [];
-      if (personAnalysis.gender) parts.push(personAnalysis.gender);
-      if (personAnalysis.height_cm) parts.push(`${personAnalysis.height_cm}cm tall`);
-      if (personAnalysis.weight_kg) parts.push(`${personAnalysis.weight_kg}kg`);
-      if (personAnalysis.fit_preference) parts.push(`${personAnalysis.fit_preference} fit preference`);
-      personDesc = parts.length > 0 ? `a ${parts.join(", ")} person` : "a fashion model";
+      if (resolvedGender) parts.push(resolvedGender);
+      if (personAnalysis?.height_cm) parts.push(`${personAnalysis.height_cm}cm tall`);
+      if (personAnalysis?.weight_kg) parts.push(`${personAnalysis.weight_kg}kg`);
+      if (personAnalysis?.fit_preference) parts.push(`${personAnalysis.fit_preference} fit preference`);
+      personDesc = parts.length > 0 ? `a ${parts.join(", ")} person` : personDesc;
+    }
+
+    // Fetch user's photo for reference image (if available)
+    let personImageBase64: string | null = null;
+    if (personPhotoUrl) {
+      try {
+        const photoRes = await fetch(personPhotoUrl);
+        if (photoRes.ok) {
+          const photoBuffer = Buffer.from(await photoRes.arrayBuffer());
+          personImageBase64 = photoBuffer.toString("base64");
+        }
+      } catch (err) {
+        console.error("[Veo] Failed to fetch person photo:", err);
+      }
     }
 
     // Build garment description — emphasize the product-specific features
@@ -103,15 +123,33 @@ export async function POST(request: NextRequest) {
       productEmphasis = `Draw attention to the ${garmentType}: the fit, the neckline, sleeves, and overall drape.`;
     }
 
-    const prompt = `Full-body fashion video of ${personDesc} wearing ${garmentDesc}. IMPORTANT: The entire person must be visible from head to shoes/feet at all times — never crop any body part.${styleNote} Clean white studio backdrop, soft even professional lighting. Fixed wide-angle camera at waist height, centered. The model stands facing camera, then does a slow 360-degree turn in place. ${productEmphasis} Cinematic, high quality, 4K fashion video.`;
+    const referenceNote = personImageBase64
+      ? " The person in the reference image is the model — the video must depict this exact person's face, body, and appearance."
+      : "";
+
+    const prompt = `Full-body fashion video of ${personDesc} wearing ${garmentDesc}.${referenceNote} IMPORTANT: The entire person must be visible from head to shoes/feet at all times — never crop any body part.${styleNote} Clean white studio backdrop, soft even professional lighting. Fixed wide-angle camera at waist height, centered. The model stands facing camera, then does a slow 360-degree turn in place. ${productEmphasis} Cinematic, high quality, 4K fashion video.`;
 
     console.log("[Veo] Generated prompt:", prompt);
+    console.log("[Veo] Reference image:", personImageBase64 ? "yes" : "no");
 
     const operation = await ai.models.generateVideos({
       model: "veo-3.1-fast-generate-preview",
       prompt,
       config: {
         aspectRatio: "9:16",
+        ...(personImageBase64
+          ? {
+              referenceImages: [
+                {
+                  image: {
+                    imageBytes: personImageBase64,
+                    mimeType: "image/jpeg",
+                  },
+                  referenceType: "ASSET" as const,
+                },
+              ],
+            }
+          : {}),
       },
     });
 
@@ -197,11 +235,13 @@ export async function GET(request: NextRequest) {
         if (typeof resp.arrayBuffer === "function") {
           const buffer = Buffer.from(await resp.arrayBuffer());
           const storageUrl = await uploadToStorage(buffer);
-          return NextResponse.json({
-            done: true,
-            videoUrl: `data:video/mp4;base64,${buffer.toString("base64")}`,
-            storageUrl,
-          });
+          if (storageUrl) {
+            return NextResponse.json({ done: true, videoUrl: storageUrl, storageUrl });
+          }
+          return NextResponse.json(
+            { done: true, error: "Failed to upload video to storage" },
+            { status: 502 }
+          );
         }
       } catch (dlErr) {
         console.error("SDK download fallback failed:", dlErr);
@@ -215,11 +255,14 @@ export async function GET(request: NextRequest) {
 
     const buffer = Buffer.from(await videoRes.arrayBuffer());
     const storageUrl = await uploadToStorage(buffer);
-    return NextResponse.json({
-      done: true,
-      videoUrl: `data:video/mp4;base64,${buffer.toString("base64")}`,
-      storageUrl,
-    });
+    if (storageUrl) {
+      return NextResponse.json({ done: true, videoUrl: storageUrl, storageUrl });
+    }
+    // Fallback: return error instead of base64 (too large for serverless response)
+    return NextResponse.json(
+      { done: true, error: "Failed to upload video to storage" },
+      { status: 502 }
+    );
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unknown error polling video";

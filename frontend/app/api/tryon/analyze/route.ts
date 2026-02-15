@@ -2,6 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 
+export const maxDuration = 30;
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 /**
@@ -169,6 +171,7 @@ IMPORTANT: Keep ALL values concise. No value should be longer than 15 words. "de
                   parts: [
                     {
                       text: `Analyze this person's appearance for a fashion try-on video. Return JSON with these exact keys:
+- "gender": the person's apparent gender (e.g. "male", "female")
 - "build": body build (e.g. "slim", "athletic", "average", "curvy")
 - "hair": hair description (color, length, style)
 - "age_range": approximate age range (e.g. "early 20s", "mid 30s")
@@ -212,6 +215,7 @@ IMPORTANT: Keep ALL values concise. No value should be longer than 15 words. "de
     let personAnalysis = null;
     if (personAiResult) {
       personAnalysis = {
+        gender: personAiResult.gender ?? null,
         build: personAiResult.build ?? null,
         hair: personAiResult.hair ?? null,
         age_range: personAiResult.age_range ?? null,

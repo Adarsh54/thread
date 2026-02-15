@@ -3,6 +3,7 @@ import { computeEmbeddingsForBackfill } from "@/lib/search/backfill";
 import { SEARCH_CONFIG } from "@/lib/search/config";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * POST /api/search/backfill-embeddings

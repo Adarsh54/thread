@@ -11,6 +11,7 @@ const nextConfig = {
       { protocol: "https", hostname: "cdn.dummyjson.com" },
       { protocol: "https", hostname: "fakestoreapi.com" },
       { protocol: "https", hostname: "i.imgur.com" },
+      { protocol: "https", hostname: "tgqicwinntryxsmpzmyf.supabase.co" },
     ],
   },
 }

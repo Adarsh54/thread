@@ -317,6 +317,8 @@ function OutfitPageInner() {
           productCategory: p.category || null,
           productAnalysis: analysis?.product ?? null,
           personAnalysis: analysis?.person ?? null,
+          personPhotoUrl: prefs?.photo_url || null,
+          gender: prefs?.gender || analysis?.person?.gender || null,
         }),
       });
 
