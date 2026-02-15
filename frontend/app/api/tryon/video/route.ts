@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { productName, productCategory, productAnalysis, personAnalysis, personPhotoUrl, gender } = await request.json();
+  const { productName, productCategory, productImageUrl, productAnalysis, personAnalysis, personPhotoUrl, gender } = await request.json();
 
   if (!productName) {
     return NextResponse.json(
@@ -85,19 +85,23 @@ export async function POST(request: NextRequest) {
       personDesc = parts.length > 0 ? `a ${parts.join(", ")} person` : personDesc;
     }
 
-    // Fetch user's photo for reference image (if available)
-    let personImageBase64: string | null = null;
-    if (personPhotoUrl) {
+    // Fetch person photo and product image in parallel for reference images
+    const fetchImageBase64 = async (url: string, label: string): Promise<string | null> => {
       try {
-        const photoRes = await fetch(personPhotoUrl);
-        if (photoRes.ok) {
-          const photoBuffer = Buffer.from(await photoRes.arrayBuffer());
-          personImageBase64 = photoBuffer.toString("base64");
-        }
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const buf = Buffer.from(await res.arrayBuffer());
+        return buf.toString("base64");
       } catch (err) {
-        console.error("[Veo] Failed to fetch person photo:", err);
+        console.error(`[Veo] Failed to fetch ${label}:`, err);
+        return null;
       }
-    }
+    };
+
+    const [personImageBase64, productImageBase64] = await Promise.all([
+      personPhotoUrl ? fetchImageBase64(personPhotoUrl, "person photo") : Promise.resolve(null),
+      productImageUrl ? fetchImageBase64(productImageUrl, "product image") : Promise.resolve(null),
+    ]);
 
     // Build garment description — emphasize the product-specific features
     let garmentDesc = productName;
@@ -123,33 +127,37 @@ export async function POST(request: NextRequest) {
       productEmphasis = `Draw attention to the ${garmentType}: the fit, the neckline, sleeves, and overall drape.`;
     }
 
-    const referenceNote = personImageBase64
-      ? " The person in the reference image is the model — the video must depict this exact person's face, body, and appearance."
-      : "";
+    const referenceNotes: string[] = [];
+    if (personImageBase64) referenceNotes.push("The person in the reference image is the model — the video must depict this exact person's face, body, and appearance.");
+    if (productImageBase64) referenceNotes.push("The garment in the reference image is the exact product — match its color, fabric, pattern, and details precisely.");
+    const referenceNote = referenceNotes.length > 0 ? " " + referenceNotes.join(" ") : "";
 
     const prompt = `Full-body fashion video of ${personDesc} wearing ${garmentDesc}.${referenceNote} IMPORTANT: The entire person must be visible from head to shoes/feet at all times — never crop any body part.${styleNote} Clean white studio backdrop, soft even professional lighting. Fixed wide-angle camera at waist height, centered. The model stands facing camera, then does a slow 360-degree turn in place. ${productEmphasis} Cinematic, high quality, 4K fashion video.`;
 
     console.log("[Veo] Generated prompt:", prompt);
-    console.log("[Veo] Reference image:", personImageBase64 ? "yes" : "no");
+    console.log("[Veo] Reference images — person:", !!personImageBase64, "product:", !!productImageBase64);
+
+    // Build reference images array (person + product, up to 3 ASSET refs supported)
+    const referenceImages: { image: { imageBytes: string; mimeType: string }; referenceType: "ASSET" }[] = [];
+    if (personImageBase64) {
+      referenceImages.push({
+        image: { imageBytes: personImageBase64, mimeType: "image/jpeg" },
+        referenceType: "ASSET",
+      });
+    }
+    if (productImageBase64) {
+      referenceImages.push({
+        image: { imageBytes: productImageBase64, mimeType: "image/jpeg" },
+        referenceType: "ASSET",
+      });
+    }
 
     const operation = await ai.models.generateVideos({
       model: "veo-3.1-fast-generate-preview",
       prompt,
       config: {
         aspectRatio: "9:16",
-        ...(personImageBase64
-          ? {
-              referenceImages: [
-                {
-                  image: {
-                    imageBytes: personImageBase64,
-                    mimeType: "image/jpeg",
-                  },
-                  referenceType: "ASSET" as const,
-                },
-              ],
-            }
-          : {}),
+        ...(referenceImages.length > 0 ? { referenceImages } : {}),
       },
     });
 

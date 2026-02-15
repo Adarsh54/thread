@@ -315,6 +315,7 @@ function OutfitPageInner() {
         body: JSON.stringify({
           productName: p.name,
           productCategory: p.category || null,
+          productImageUrl: p.image_url || null,
           productAnalysis: analysis?.product ?? null,
           personAnalysis: analysis?.person ?? null,
           personPhotoUrl: prefs?.photo_url || null,
