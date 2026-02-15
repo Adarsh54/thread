@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
 For example: if it's pants/jeans, emphasize fit (slim, relaxed, wide-leg), rise (low, mid, high), leg opening, wash/finish, and pant-specific details like distressing or stitching. If it's a top, focus on neckline, sleeve style, hem length, and top-specific details. Always tailor your descriptions to what matters most for this specific garment type.
 
 Return JSON with these exact keys:
+- "color": the primary color name of the garment (e.g. "navy", "olive", "burgundy", "charcoal", "cream")
+- "color_hex": the exact hex color code that best represents the dominant color of the garment (e.g. "#2b4a8f", "#4a6741", "#8b1a3a"). Look at the actual garment pixels, not the background.
 - "garment_type": specific type (e.g. "high-rise slim-fit jeans", "cropped oversized hoodie", "A-line midi dress")
 - "style": the style/vibe (e.g. "streetwear", "formal", "casual", "athleisure")
 - "fabric": the apparent fabric/material (e.g. "stretch denim", "ribbed cotton", "silk charmeuse")
@@ -142,7 +144,7 @@ Return JSON with these exact keys:
 - "details": a SHORT comma-separated list of notable design details, max 10 words total (e.g. "distressed knees, raw hem, contrast stitching" NOT a full paragraph)
 - "features": an array of 3-6 short feature tags, each 1-4 words, capturing the most distinctive micro-details a shopper would notice (e.g. ["raw hem", "mid-rise", "stretch denim", "whisker fading", "tapered leg", "brass rivets"] for jeans, or ["mock neck", "ribbed cuffs", "relaxed fit", "drop shoulder"] for a sweater)
 
-IMPORTANT: Keep ALL values concise. No value should be longer than 15 words. "details" should be a short comma-separated list, NOT a paragraph or full sentence.`,
+IMPORTANT: Keep ALL values concise. No value should be longer than 15 words. "details" should be a short comma-separated list, NOT a paragraph or full sentence. "color_hex" must be a valid 7-character hex color code starting with #.`,
                 },
                 { fileData: { mimeType: "image/jpeg", fileUri: productImageUrl } },
               ],
@@ -186,12 +188,17 @@ IMPORTANT: Keep ALL values concise. No value should be longer than 15 words. "de
         : Promise.resolve(null),
     ]);
 
-    const colorName = colorToName(dominantColorHex);
+    // Use AI-derived color as primary, sharp pixel sampling as fallback
+    const aiColorHex = typeof productAiResult?.color_hex === "string" && /^#[0-9a-fA-F]{6}$/.test(productAiResult.color_hex)
+      ? productAiResult.color_hex
+      : null;
+    const finalColorHex = aiColorHex ?? dominantColorHex;
+    const colorName = productAiResult?.color ?? colorToName(finalColorHex);
 
     // Build the product analysis
     const productAnalysis = {
       color: colorName,
-      color_hex: dominantColorHex,
+      color_hex: finalColorHex,
       garment_type: productAiResult?.garment_type ?? productName,
       style: productAiResult?.style ?? null,
       fabric: productAiResult?.fabric ?? null,

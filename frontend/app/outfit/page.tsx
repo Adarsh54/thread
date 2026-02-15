@@ -660,7 +660,7 @@ function OutfitPageInner() {
 
           {/* ── Mannequin with outfit — top right ── */}
           <div className="relative rounded-2xl bg-secondary overflow-hidden min-h-[400px]">
-            <MannequinViewer product={selectedProduct} />
+            <MannequinViewer product={selectedProduct} colorHex={analysis?.product?.color_hex} />
 
             {/* Settings overlay */}
             <div className="absolute top-3 left-3 flex flex-col gap-1">
