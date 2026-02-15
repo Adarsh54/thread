@@ -26,6 +26,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const limit = Math.min(Number(searchParams.get("limit") ?? GRAPH_LIMIT), 2000);
   const q = searchParams.get("q")?.trim();
+  // ids param: comma-separated product IDs to highlight (used by agent "View in graph")
+  const idsParam = searchParams.get("ids")?.trim();
+  const highlightIds = idsParam
+    ? new Set(idsParam.split(",").map((id) => id.trim()).filter(Boolean))
+    : null;
 
   const supabase = await createClient();
 
@@ -48,9 +53,26 @@ export async function GET(request: NextRequest) {
     productById.set(p.id, p);
   }
 
-  // If there's a query, run semantic search for the top 50
-  const matchMap = new Map<string, number>(); // id → similarity
-  if (q) {
+  // If explicit IDs provided (agent outfit), ensure they're in the graph
+  const matchMap = new Map<string, number>(); // id → similarity (or 1.0 for explicit IDs)
+  if (highlightIds && highlightIds.size > 0) {
+    // Fetch any missing highlight products
+    const missingIds = [...highlightIds].filter((id) => !productById.has(id));
+    if (missingIds.length > 0) {
+      const { data: extras } = await supabase
+        .from("products")
+        .select("id, name, image_url, price, category, brand, source, metadata")
+        .in("id", missingIds);
+      for (const p of extras ?? []) {
+        productById.set(p.id, p);
+      }
+    }
+    // All highlighted IDs get similarity 1.0 (center cluster)
+    for (const id of highlightIds) {
+      if (productById.has(id)) matchMap.set(id, 1.0);
+    }
+  } else if (q) {
+    // Semantic search for top 50
     try {
       const matches = await runSemanticSearch(q, {
         limit: SEMANTIC_TOP_K,
@@ -61,8 +83,7 @@ export async function GET(request: NextRequest) {
         matchMap.set(m.id, m.similarity ?? 0.5);
       }
 
-      // Ensure every matched product is in the graph, even if the initial
-      // Supabase fetch (limited to `limit`) didn't include it
+      // Ensure every matched product is in the graph
       const missingIds = matches
         .filter((m) => !productById.has(m.id))
         .map((m) => m.id);
@@ -100,7 +121,7 @@ export async function GET(request: NextRequest) {
 
     let position: [number, number, number];
 
-    if (q && isMatch) {
+    if ((q || highlightIds) && isMatch) {
       // ── Matched node: similarity-based inner cluster ──
       const sim = matchMap.get(product.id)!;
       // High similarity → small radius (close to center)
@@ -138,7 +159,7 @@ export async function GET(request: NextRequest) {
       source: product.source,
       metadata: product.metadata ?? null,
       position,
-      highlighted: q ? isMatch : false,
+      highlighted: (q || highlightIds) ? isMatch : false,
     };
   });
 

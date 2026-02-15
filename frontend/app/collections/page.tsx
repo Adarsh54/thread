@@ -10,15 +10,15 @@ export default function CollectionsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       <Header />
       <div className="pt-28" />
 
       <div className="mx-auto max-w-7xl px-6 md:px-12">
-        <h1 className="text-4xl font-bold tracking-tight text-neutral-900 md:text-5xl">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
           Collections
         </h1>
-        <p className="mt-2 text-lg text-neutral-400">
+        <p className="mt-2 text-lg text-muted-foreground">
           Browse and shop all pieces.
         </p>
       </div>

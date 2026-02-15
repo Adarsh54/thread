@@ -57,7 +57,7 @@ export function SearchModal({
         showCloseButton={false}
         className={cn(
           "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-0 rounded-3xl border-0 p-0 shadow-2xl",
-          "max-h-[85vh] overflow-y-auto bg-white",
+          "max-h-[85vh] overflow-y-auto bg-background border border-border",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
@@ -66,7 +66,7 @@ export function SearchModal({
           <div className="flex flex-col p-6 pt-8 pb-12">
             {/* Search bar */}
             <form onSubmit={handleSubmit} className="mb-8">
-              <div className="relative flex items-center rounded-full bg-[#F0F0F0] px-4 py-3">
+              <div className="relative flex items-center rounded-full bg-secondary px-4 py-3">
                 <Search
                   className="text-muted-foreground pointer-events-none size-5 shrink-0"
                   aria-hidden
@@ -98,10 +98,10 @@ export function SearchModal({
             <div className="flex flex-col gap-3 mb-10">
               <button
                 type="button"
-                className="flex h-24 w-full items-center gap-4 overflow-hidden rounded-xl bg-[#E8E0D5] text-left transition-opacity hover:opacity-95"
+                className="flex h-24 w-full items-center gap-4 overflow-hidden rounded-xl bg-secondary text-left transition-opacity hover:opacity-95"
                 onClick={() => handleSuggestionClick("AG jeans")}
               >
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white ml-4 text-sm font-semibold text-foreground">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-background ml-4 text-sm font-semibold text-foreground">
                   AG
                 </div>
                 <span className="font-medium text-foreground/90">AG</span>

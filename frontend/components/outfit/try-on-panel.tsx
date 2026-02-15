@@ -10,9 +10,11 @@ const TRYON_PRODUCT_KEY = "thread_tryon_product";
 interface TryOnPanelProps {
   product: Product | null;
   onClose: () => void;
+  /** Which side the panel slides in from. Defaults to "right". */
+  side?: "left" | "right";
 }
 
-export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
+export function TryOnPanel({ product, onClose, side = "right" }: TryOnPanelProps) {
   const router = useRouter();
 
   if (!product) return null;
@@ -35,7 +37,11 @@ export function TryOnPanel({ product, onClose }: TryOnPanelProps) {
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-background shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className={`relative flex h-full w-full max-w-2xl flex-col bg-background shadow-2xl animate-in duration-300 ${
+        side === "left"
+          ? "mr-auto slide-in-from-left"
+          : "ml-auto slide-in-from-right"
+      }`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>

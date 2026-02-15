@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Search, X, LayoutList, ArrowLeft } from "lucide-react";
+import { Search, X, LayoutList, ArrowLeft, ShoppingBag, Check } from "lucide-react";
 import type { GraphNode } from "@/components/search/product-graph";
 import { TryOnPanel } from "@/components/outfit/try-on-panel";
+import { useCart } from "@/lib/cart-context";
 import type { Product } from "@/types/product";
 
 const ProductGraph = dynamic(
@@ -37,15 +38,18 @@ export default function SearchPage() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
   const [searchActive, setSearchActive] = useState(false);
+  const [agentIds, setAgentIds] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { addItem, items: cartItems } = useCart();
 
-  // Fetch graph data
-  const fetchGraph = useCallback(async (q: string) => {
+  // Fetch graph data (supports query string OR explicit highlight IDs)
+  const fetchGraph = useCallback(async (q: string, ids?: string | null) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ limit: "500" });
       if (q) params.set("q", q);
+      if (ids) params.set("ids", ids);
       const res = await fetch(`/api/products/graph?${params}`);
       if (!res.ok) return;
       const data = await res.json();
@@ -55,8 +59,25 @@ export default function SearchPage() {
     }
   }, []);
 
-  // Initial load
+  // Initial load — check for agent outfit in sessionStorage
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("agent-outfit");
+      if (raw) {
+        sessionStorage.removeItem("agent-outfit");
+        const products = JSON.parse(raw) as Array<{ id: string }>;
+        if (Array.isArray(products) && products.length > 0) {
+          const ids = products.map((p) => p.id).join(",");
+          setAgentIds(ids);
+          setSearchActive(true);
+          setListOpen(true);
+          fetchGraph("", ids);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
     fetchGraph("");
   }, [fetchGraph]);
 
@@ -74,11 +95,12 @@ export default function SearchPage() {
     return () => window.removeEventListener("open-search", handler);
   }, [searchActive]);
 
-  // Debounced search
+  // Debounced search — clears agent IDs when user types a new query
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchGraph(query);
+      if (query) setAgentIds(null); // user is searching manually now
+      fetchGraph(query, query ? null : agentIds);
     }, 400);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -86,7 +108,7 @@ export default function SearchPage() {
   }, [query, fetchGraph]);
 
   const highlighted = nodes.filter((n) => n.highlighted);
-  const hasQuery = query.trim().length > 0;
+  const hasQuery = query.trim().length > 0 || agentIds != null;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0a0a0a]">
@@ -285,15 +307,35 @@ export default function SearchPage() {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => {
-                setTryOnProduct(nodeToProduct(selectedNode));
-                setSelectedNode(null);
-              }}
-              className="mt-3 w-full rounded-full bg-white py-2 text-xs font-semibold text-black hover:bg-white/90 transition-colors"
-            >
-              View details
-            </button>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  const p = nodeToProduct(selectedNode);
+                  if (!cartItems.some((ci) => ci.product.id === p.id)) addItem(p);
+                }}
+                disabled={cartItems.some((ci) => ci.product.id === selectedNode.id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2 text-xs font-semibold transition-colors ${
+                  cartItems.some((ci) => ci.product.id === selectedNode.id)
+                    ? "bg-green-500/20 border border-green-500/30 text-green-400"
+                    : "bg-white text-black hover:bg-white/90"
+                }`}
+              >
+                {cartItems.some((ci) => ci.product.id === selectedNode.id) ? (
+                  <><Check size={12} /> In cart</>
+                ) : (
+                  <><ShoppingBag size={12} /> Add to cart</>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setTryOnProduct(nodeToProduct(selectedNode));
+                  setSelectedNode(null);
+                }}
+                className="flex-1 rounded-full border border-white/20 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+              >
+                View details
+              </button>
+            </div>
           </div>
           <button
             onClick={() => setSelectedNode(null)}
@@ -337,48 +379,77 @@ export default function SearchPage() {
 
         {/* Cards */}
         <div className="h-[calc(100%-65px)] overflow-y-auto p-6 space-y-5">
-          {highlighted.map((node) => (
-            <div
-              key={node.id}
-              onClick={() => setTryOnProduct(nodeToProduct(node))}
-              className="group flex gap-5 rounded-2xl border-2 border-white/20 bg-white p-6 hover:border-white/40 hover:shadow-lg transition-all cursor-pointer"
-            >
-              {node.image_url && (
-                <div className="relative h-36 w-28 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
-                  <Image
-                    src={node.image_url}
-                    alt={node.name}
-                    fill
-                    className="object-cover"
-                    sizes="112px"
-                    loading="eager"
-                  />
+          {highlighted.map((node) => {
+            const nodeInCart = cartItems.some((ci) => ci.product.id === node.id);
+            return (
+              <div
+                key={node.id}
+                className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 hover:border-white/25 hover:bg-white/10 transition-all"
+              >
+                <div
+                  onClick={() => setTryOnProduct(nodeToProduct(node))}
+                  className="flex gap-5 cursor-pointer"
+                >
+                  {node.image_url && (
+                    <div className="relative h-36 w-28 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+                      <Image
+                        src={node.image_url}
+                        alt={node.name}
+                        fill
+                        className="object-cover"
+                        sizes="112px"
+                        loading="eager"
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1 py-1">
+                    {node.brand && (
+                      <p className="text-xs font-medium uppercase tracking-wider text-white/40">
+                        {node.brand}
+                      </p>
+                    )}
+                    <p className="mt-1 text-base font-semibold text-white leading-snug line-clamp-2">
+                      {node.name}
+                    </p>
+                    <div className="mt-3 flex items-center gap-3">
+                      {node.price != null && (
+                        <span className="text-base font-bold text-white/90">
+                          ${node.price.toFixed(2)}
+                        </span>
+                      )}
+                      {node.category && (
+                        <span className="rounded-full bg-white/10 border border-white/10 px-2.5 py-0.5 text-xs text-white/50 capitalize">
+                          {node.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="min-w-0 flex-1 py-1">
-                {node.brand && (
-                  <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
-                    {node.brand}
-                  </p>
-                )}
-                <p className="mt-1 text-base font-semibold text-neutral-900 leading-snug line-clamp-2">
-                  {node.name}
-                </p>
-                <div className="mt-3 flex items-center gap-3">
-                  {node.price != null && (
-                    <span className="text-base font-bold text-neutral-800">
-                      ${node.price.toFixed(2)}
-                    </span>
-                  )}
-                  {node.category && (
-                    <span className="rounded-full bg-neutral-100 border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-500 capitalize">
-                      {node.category}
-                    </span>
-                  )}
+                {/* Add to cart */}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (!nodeInCart) addItem(nodeToProduct(node));
+                    }}
+                    disabled={nodeInCart}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                      nodeInCart
+                        ? "bg-green-500/10 border border-green-500/20 text-green-400"
+                        : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    {nodeInCart ? <><Check size={12} /> In cart</> : <><ShoppingBag size={12} /> Add to cart</>}
+                  </button>
+                  <button
+                    onClick={() => setTryOnProduct(nodeToProduct(node))}
+                    className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    View details
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import { Menu, X, Settings2, Search } from "lucide-react";
+import { Menu, X, Settings2, Search, Bot, ShoppingBag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useCart } from "@/lib/cart-context";
 import type { User } from "@supabase/supabase-js";
 
 export function Header() {
@@ -14,6 +15,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const { itemCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,6 +87,13 @@ export function Header() {
           >
             Find
           </Link>
+          <Link
+            href="/agent"
+            className="flex items-center gap-1.5 text-lg font-semibold transition-colors text-white/80 hover:text-white drop-shadow-sm"
+          >
+            <Bot size={18} />
+            Thread Bot
+          </Link>
         </nav>
 
         {/* CTA + Auth - Right side */}
@@ -102,6 +111,18 @@ export function Header() {
           >
             <Search size={20} />
           </button>
+          <Link
+            href="/cart"
+            className="relative p-2.5 rounded-full text-white/80 hover:text-white transition-colors drop-shadow-sm"
+            aria-label="Cart"
+          >
+            <ShoppingBag size={20} />
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black">
+                {itemCount > 9 ? "9+" : itemCount}
+              </span>
+            )}
+          </Link>
           {user && (
             <Link
               href="/preferences"
@@ -163,6 +184,25 @@ export function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Find
+            </Link>
+            <Link
+              href="/agent"
+              className="text-xl text-foreground"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Thread Bot
+            </Link>
+            <Link
+              href="/cart"
+              className="flex items-center gap-2 text-xl text-foreground"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Cart
+              {itemCount > 0 && (
+                <span className="rounded-full bg-foreground px-2 py-0.5 text-xs font-bold text-background">
+                  {itemCount}
+                </span>
+              )}
             </Link>
             {user ? (
               <>
