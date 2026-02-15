@@ -132,47 +132,32 @@ export async function POST(request: NextRequest) {
       productEmphasis = `Draw attention to the ${garmentType}: the fit, the neckline, sleeves, and overall drape.`;
     }
 
-    // Strategy: use person's photo as the `image` param (image-to-video anchor)
-    // so Veo starts from their face/body. Product image goes as a reference
-    // for the garment. Text prompt describes dressing them in the product.
+    // Strategy: `image` and `referenceImages` are MUTUALLY EXCLUSIVE in Veo.
+    // When person photo exists → use as `image` (image-to-video anchor).
+    //   Garment is described purely via text (already very detailed from Gemini).
+    // When only product photo exists → use as single referenceImage ASSET.
     const hasPersonImage = !!personImageBase64;
-    const hasProductImage = !!productImageBase64;
 
     let referenceNote = "";
-    if (hasPersonImage && hasProductImage) {
-      referenceNote = ` The input image is a photo of the person — this is who must appear in the video. Keep their exact face, hair, and body. The reference image shows the garment they should be wearing — dress them in this exact clothing item. Ignore the person/mannequin in the garment photo, only use the clothing.`;
-    } else if (hasPersonImage) {
-      referenceNote = ` The input image is a photo of the person — the video must depict this exact person's face, body, hair, and skin tone.`;
-    } else if (hasProductImage) {
-      referenceNote = ` The reference image shows the garment — match its exact color, fabric, pattern, and details. Ignore the person/mannequin in the photo.`;
+    if (hasPersonImage) {
+      referenceNote = ` The input image is a photo of the person who must appear in the video. This video must depict THIS EXACT person — preserve their face, hair, skin tone, and body precisely. Dress this person in the described garment.`;
     }
 
     const prompt = `Full-body fashion video of ${personDesc} wearing ${garmentDesc}.${referenceNote} CRITICAL FRAMING: The person's face and head must be FULLY visible at all times with space above the head. Show the entire body from the top of the head to the feet — never cut off the face or head. Do NOT match the framing of the input image.${styleNote} Clean white studio backdrop, soft even professional lighting. Fixed camera centered on the person with enough room to show head to toe with padding above and below. The model stands facing camera, then does a slow 360-degree turn in place. ${productEmphasis} Cinematic, high quality, 4K fashion video.`;
 
     console.log("[Veo] Generated prompt:", prompt);
-    console.log("[Veo] Person image:", hasPersonImage, "Product image:", hasProductImage);
+    console.log("[Veo] Person image (image-to-video):", hasPersonImage);
 
-    // Person photo → `image` param (image-to-video: anchors on their appearance)
-    // Product photo → `referenceImages` ASSET (garment reference)
-    const referenceImages: { image: { imageBytes: string; mimeType: string }; referenceType: "ASSET" }[] = [];
-    if (hasProductImage) {
-      referenceImages.push({
-        image: { imageBytes: productImageBase64!, mimeType: "image/jpeg" },
-        referenceType: "ASSET",
-      });
-    }
-
-    const useFullModel = hasPersonImage || referenceImages.length > 0;
-    const model = useFullModel
+    // Use full model when we have an input image
+    const model = hasPersonImage
       ? "veo-3.1-generate-preview"
       : "veo-3.1-fast-generate-preview";
 
-    console.log(`[Veo] Using model: ${model}, image-to-video: ${hasPersonImage}, referenceImages: ${referenceImages.length}`);
+    console.log(`[Veo] Using model: ${model}`);
 
     const operation = await ai.models.generateVideos({
       model,
       prompt,
-      // Person photo as the image-to-video input (Veo anchors on this person)
       ...(hasPersonImage
         ? {
             image: {
@@ -184,7 +169,6 @@ export async function POST(request: NextRequest) {
       config: {
         aspectRatio: "9:16",
         personGeneration: "allow_adult",
-        ...(referenceImages.length > 0 ? { referenceImages } : {}),
       },
     });
 
