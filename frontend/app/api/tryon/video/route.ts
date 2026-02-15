@@ -88,9 +88,14 @@ export async function POST(request: NextRequest) {
     // Fetch person photo and product image in parallel for reference images
     const fetchImageBase64 = async (url: string, label: string): Promise<string | null> => {
       try {
+        console.log(`[Veo] Fetching ${label}:`, url);
         const res = await fetch(url);
-        if (!res.ok) return null;
+        if (!res.ok) {
+          console.error(`[Veo] ${label} fetch failed: ${res.status} ${res.statusText}`);
+          return null;
+        }
         const buf = Buffer.from(await res.arrayBuffer());
+        console.log(`[Veo] ${label} fetched: ${buf.length} bytes`);
         return buf.toString("base64");
       } catch (err) {
         console.error(`[Veo] Failed to fetch ${label}:`, err);
@@ -152,11 +157,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Use full veo-3.1 when we have reference images (fast preview doesn't support them)
+    const model = referenceImages.length > 0
+      ? "veo-3.1-generate-preview"
+      : "veo-3.1-fast-generate-preview";
+
+    console.log(`[Veo] Using model: ${model}, referenceImages: ${referenceImages.length}`);
+
     const operation = await ai.models.generateVideos({
-      model: "veo-3.1-fast-generate-preview",
+      model,
       prompt,
       config: {
         aspectRatio: "9:16",
+        personGeneration: "allow_adult",
         ...(referenceImages.length > 0 ? { referenceImages } : {}),
       },
     });
